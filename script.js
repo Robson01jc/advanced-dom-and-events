@@ -163,12 +163,13 @@ imgTargets.forEach(img => {
 const slides = document.querySelectorAll('.slide');
 const btnLeft = document.querySelector('.slider__btn--left');
 const btnRight = document.querySelector('.slider__btn--right');
+const dotContainer = document.querySelector('.dots');
 
 class Slider {
-  constructor(slides) {
+  constructor(slides, dotContainer) {
     this._slides = slides;
-    this._curSlide = 0;
-    this._goToSlide();
+    this._dotContainer = dotContainer;
+    this._init();
   }
 
   get maxSlide() {
@@ -182,6 +183,22 @@ class Slider {
   set curSlide(slide) {
     this._curSlide = slide;
     this._goToSlide();
+    this._activateDot();
+  }
+
+  _init() {
+    this._createDots();
+    this.curSlide = 0;
+  }
+
+  _activateDot() {
+    this._dotContainer.querySelectorAll('button.dots__dot').forEach(dot => {
+      dot.classList.remove('dots__dot--active');
+    });
+
+    this._dotContainer
+      .querySelector(`.dots__dot[data-slide="${this.curSlide}"]`)
+      .classList.add('dots__dot--active');
   }
 
   _goToSlide() {
@@ -190,17 +207,35 @@ class Slider {
     });
   }
 
+  _createDots() {
+    this._slides.forEach((_, i) => {
+      this._dotContainer.insertAdjacentHTML(
+        'beforeend',
+        `<button class="dots__dot" data-slide="${i}"></button>`
+      );
+    });
+
+    this._dotContainer.addEventListener('click', e => {
+      if (e.target.matches('button.dots__dot')) {
+        const { slide } = e.target.dataset;
+        this.goTo(+slide);
+      }
+    });
+  }
+
   next() {
-    this.curSlide++;
-    if (this.curSlide === this.maxSlide) {
+    if (this.curSlide === this.maxSlide - 1) {
       this.curSlide = 0;
+    } else {
+      this.curSlide++;
     }
   }
 
   prev() {
-    this.curSlide--;
-    if (this.curSlide < 0) {
+    if (this.curSlide === 0) {
       this.curSlide = this._slides.length - 1;
+    } else {
+      this.curSlide--;
     }
   }
 
@@ -209,6 +244,11 @@ class Slider {
   }
 }
 
-const slider = new Slider(slides);
+const slider = new Slider(slides, dotContainer);
 btnRight.addEventListener('click', () => slider.next());
 btnLeft.addEventListener('click', () => slider.prev());
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'ArrowLeft') slider.prev();
+  if (e.key === 'ArrowRight') slider.next();
+});
